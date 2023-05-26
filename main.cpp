@@ -1,9 +1,10 @@
 #include <iostream>
-#include <conio.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <ctime>
-
+#include <vector>
+#include <fstream>
+#include <string>
+#include <cstdlib>
+#include <time.h>
 using namespace std;
 
 void PrintMessage(string message, bool printTop = true, bool printBottom = true)
@@ -86,10 +87,118 @@ void DrawHangMan(int guessCount = 0)
         PrintMessage("", false, false);
 }
 
+void PrintLetters(string input, char from, char to)
+{
+    string s;
+    for (char i = from; i <= to; i++)
+    {
+        if (input.find(i) == string::npos)
+        {
+            s += i;
+            s += " ";
+        }
+        else
+            s += "  ";
+    }
+    PrintMessage(s, false, false);
+}
+
+void PrintAvailableLetters(string taken)
+{
+    PrintMessage("Lettres disponible");
+    PrintLetters(taken, 'A', 'M');
+    PrintLetters(taken, 'N', 'Z');
+}
+
+bool PrintWordAndCheckWin(string word, string guessed)
+{
+    bool won = true;
+    string s;
+    for (int i = 0; i < word.length(); i++)
+    {
+        if(guessed.find(word[i])== string::npos)
+        {
+            won = false;
+            s+= "_ ";
+        }
+        else 
+        {
+            s += word[i];
+            s += " ";
+
+        }
+    }
+    PrintMessage(s, false);
+    return won;
+}
+
+string LoadRandomWord(string path)
+{
+    int lineCount = 0;
+    string word;
+    vector<string> v;
+    ifstream reader(path.c_str());
+    if (reader.is_open())
+    {
+        while(std::getline(reader, word))
+            v.push_back(word);
+
+        int randomLine = rand() % v.size();
+        // 1 2 3 4 5 and other 
+
+        word = v.at(randomLine);
+        reader.close();
+    }
+    return word;
+}
+
+int TriesLeft(string word, string guessed)
+{
+    int error = 0;
+    for (int i = 0; i < guessed.length(); i++)
+    {
+        if(word.find(guessed[i])== string::npos)
+            error++;
+    }
+    return error;
+}
+
 int main()
 {
-    PrintMessage("Le jeu du pendu");
-    DrawHangMan(9);
+    srand(time(0));
+    string guesses;
+    string wordToGuess;
+    wordToGuess = LoadRandomWord("words.txt");
+    int tries = 0;
+    bool win = false;
+    do
+    {
+        system("cls"); //replace this line with system("clear"); if you run Linux or MacOS
+        PrintMessage("HANGMAN");
+        DrawHangMan(tries);
+        PrintAvailableLetters(guesses);
+        PrintMessage("Guess the word");
+        win = PrintWordAndCheckWin(wordToGuess, guesses);
+ 
+        if (win)
+            break;
+ 
+        char x;
+        cout << ">"; cin >> x;
+ 
+        if (guesses.find(x) == string::npos)
+            guesses += x;
+ 
+        tries = TriesLeft(wordToGuess, guesses);
+ 
+    } while (tries < 10);
+ 
+    if (win)
+        PrintMessage("YOU WON!");
+    else
+        PrintMessage("GAME OVER");
+ 
+    
     getchar();
     return 0;
 }
